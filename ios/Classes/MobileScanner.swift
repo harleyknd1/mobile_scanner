@@ -246,7 +246,7 @@ public class MobileScanner: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
 
         captureSession!.addOutput(videoOutput)
         for connection in videoOutput.connections {
-            connection.videoOrientation = .portrait
+            connection.videoRotationAngle = .portrait
             if cameraPosition == .front && connection.isVideoMirroringSupported {
                 connection.isVideoMirrored = true
             }
