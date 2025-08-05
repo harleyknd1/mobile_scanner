@@ -26,5 +26,6 @@ An universal scanner for Flutter based on MLKit.
     'EXCLUDED_ARCHS[sdk=iphoneos*]' => 'armv7',
   }
   s.swift_version = '5.0'
+  s.module_name = 'mobile_scanner'
   s.resource_bundles = { 'mobile_scanner_privacy' => ['Resources/PrivacyInfo.xcprivacy'] }
 end
