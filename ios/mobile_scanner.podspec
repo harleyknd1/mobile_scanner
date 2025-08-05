@@ -4,12 +4,12 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'mobile_scanner'
-  s.version          = '6.0.2'
+  s.version          = '6.0.3'
   s.summary          = 'An universal scanner for Flutter based on MLKit.'
   s.description      = <<-DESC
 An universal scanner for Flutter based on MLKit.
                        DESC
-  s.homepage         = 'https://github.com/juliansteenbakker/mobile_scanner'
+  s.homepage         = 'https://github.com/harleyknd1/mobile_scanner'
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Julian Steenbakker' => 'juliansteenbakker@outlook.com' }
   s.source           = { :path => '.' }
@@ -25,6 +25,7 @@ An universal scanner for Flutter based on MLKit.
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386 armv7 arm64',
     'EXCLUDED_ARCHS[sdk=iphoneos*]' => 'armv7',
   }
+  s.public_header_files = 'Classes/**/*.h'
   s.swift_version = '5.0'
   s.resource_bundles = { 'mobile_scanner_privacy' => ['Resources/PrivacyInfo.xcprivacy'] }
 end
