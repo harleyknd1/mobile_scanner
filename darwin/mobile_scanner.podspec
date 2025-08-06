@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'mobile_scanner'
-  s.version          = '7.0.0'
+  s.version          = '6.0.11'
   s.summary          = 'An universal scanner for Flutter based on the Vision API.'
   s.description      = <<-DESC
 An universal scanner for Flutter based on the Vision API.
