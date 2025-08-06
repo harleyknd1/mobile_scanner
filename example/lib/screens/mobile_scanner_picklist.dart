@@ -76,7 +76,7 @@ class _MobileScannerPicklistState extends State<MobileScannerPicklist> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      onPopInvokedWithResult: (didPop, result) {
+      onPopInvoked: (didPop) {
         // Reset the page orientation to the system default values, when this
         // page is popped
         if (!didPop) {
