@@ -22,7 +22,7 @@ An universal scanner for Flutter based on MLKit.
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     # TODO: add back arm64 (and armv7?) when switching to the Vision API.
-    'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
+    'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386 armv7',
     'EXCLUDED_ARCHS[sdk=iphoneos*]' => 'armv7',
   }
   s.swift_version = '5.0'
