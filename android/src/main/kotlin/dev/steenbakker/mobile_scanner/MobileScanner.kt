@@ -70,7 +70,7 @@ class MobileScanner(
     private var camera: Camera? = null
     private var cameraSelector: CameraSelector? = null
     private var preview: Preview? = null
-    private var surfaceProducer: TextureRegistry.SurfaceProducer? = null
+    private var textureEntry: TextureRegistry.SurfaceTextureEntry? = null
     private var scanner: BarcodeScanner? = null
     private var lastScanned: List<String?>? = null
     private var scannerTimeout = false
@@ -215,68 +215,6 @@ class MobileScanner(
         }
     }
 
-    /**
-     * Create a {@link Preview.SurfaceProvider} that specifies how to provide a {@link Surface} to a
-     * {@code Preview}.
-     */
-    @VisibleForTesting
-    fun createSurfaceProvider(surfaceProducer: TextureRegistry.SurfaceProducer): Preview.SurfaceProvider {
-        return Preview.SurfaceProvider {
-            request: SurfaceRequest ->
-            run {
-                // Set the callback for the surfaceProducer to invalidate Surfaces that it produces
-                // when they get destroyed.
-                surfaceProducer.setCallback(
-                    object : TextureRegistry.SurfaceProducer.Callback {
-                        override fun onSurfaceAvailable() {
-                            // Do nothing. The Preview.SurfaceProvider will handle this
-                            // whenever a new Surface is needed.
-                        }
-
-                        override fun onSurfaceCleanup() {
-                            // Invalidate the SurfaceRequest so that CameraX knows to to make a new request
-                            // for a surface.
-                            request.invalidate()
-                        }
-                    }
-                )
-
-                // Provide the surface.
-                surfaceProducer.setSize(request.resolution.width, request.resolution.height)
-
-                val surface: Surface = surfaceProducer.surface
-
-                // The single thread executor is only used to invoke the result callback.
-                // Thus it is safe to use a new executor,
-                // instead of reusing the executor that is passed to the camera process provider.
-                request.provideSurface(surface, Executors.newSingleThreadExecutor()) {
-                    // Handle the result of the request for a surface.
-                    // See: https://developer.android.com/reference/androidx/camera/core/SurfaceRequest.Result
-
-                    // Always attempt a release.
-                    surface.release()
-
-                    val resultCode: Int = it.resultCode
-
-                    when(resultCode) {
-                        SurfaceRequest.Result.RESULT_REQUEST_CANCELLED,
-                        SurfaceRequest.Result.RESULT_WILL_NOT_PROVIDE_SURFACE,
-                        SurfaceRequest.Result.RESULT_SURFACE_ALREADY_PROVIDED,
-                        SurfaceRequest.Result.RESULT_SURFACE_USED_SUCCESSFULLY -> {
-                            // Only need to release, do nothing.
-                        }
-                        SurfaceRequest.Result.RESULT_INVALID_SURFACE -> {
-                            // The surface was invalid, so it is not clear how to recover from this.
-                        }
-                        else -> {
-                            // Fallthrough, in case any result codes are added later.
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     @ExperimentalLensFacing
     private fun getCameraLensFacing(camera: Camera?): Int? {
         return when(camera?.cameraInfo?.lensFacing) {
@@ -349,7 +287,7 @@ class MobileScanner(
         this.returnImage = returnImage
         this.invertImage = invertImage
 
-        if (camera?.cameraInfo != null && preview != null && surfaceProducer != null && !isPaused) {
+        if (camera?.cameraInfo != null && preview != null && textureEntry != null && !isPaused) {
 
 // TODO: resume here for seamless transition
 //            if (isPaused) {
@@ -392,10 +330,23 @@ class MobileScanner(
             }
 
             cameraProvider?.unbindAll()
-            surfaceProducer = surfaceProducer ?: textureRegistry.createSurfaceProducer()
-            val surfaceProvider: Preview.SurfaceProvider = createSurfaceProvider(surfaceProducer!!)
+            textureEntry = textureEntry ?: textureRegistry.createSurfaceTexture()
 
             // Preview
+            val surfaceProvider = Preview.SurfaceProvider { request ->
+                if (isStopped()) {
+                    return@SurfaceProvider
+                }
+
+                val texture = textureEntry!!.surfaceTexture()
+                texture.setDefaultBufferSize(
+                    request.resolution.width,
+                    request.resolution.height
+                )
+
+                val surface = Surface(texture)
+                request.provideSurface(surface, executor) { }
+            }
 
             // Build the preview to be shown on the Flutter texture
             val previewBuilder = Preview.Builder()
@@ -499,9 +450,9 @@ class MobileScanner(
                     if (portrait) height else width,
                     deviceOrientationListener.getUIOrientation().serialize(),
                     sensorRotationDegrees,
-                    surfaceProducer!!.handlesCropAndRotation(),
+                    textureEntry!!.handlesCropAndRotation(),
                     currentTorchState,
-                    surfaceProducer!!.id(),
+                    textureEntry!!.id(),
                     numberOfCameras ?: 0,
                     cameraDirection,
                 )
@@ -575,9 +526,8 @@ class MobileScanner(
         // The camera will be closed when the last use case is unbound.
         cameraProvider?.unbindAll()
 
-        // Release the surface for the preview.
-        surfaceProducer?.release()
-        surfaceProducer = null
+        textureEntry?.release()
+        textureEntry = null
 
         // Release the scanner.
         scanner?.close()
