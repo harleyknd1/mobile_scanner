@@ -450,7 +450,7 @@ class MobileScanner(
                     if (portrait) height else width,
                     deviceOrientationListener.getUIOrientation().serialize(),
                     sensorRotationDegrees,
-                    textureEntry!!.handlesCropAndRotation(),
+                    false,
                     currentTorchState,
                     textureEntry!!.id(),
                     numberOfCameras ?: 0,
